@@ -219,6 +219,11 @@ if(BUILD_TESTING)
     target_include_directories(autorun_exit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/cli/include ${CMAKE_CURRENT_SOURCE_DIR}/io/include ${CMAKE_CURRENT_SOURCE_DIR}/domain/include)
     add_test(NAME autorun_exit_status COMMAND autorun_exit_tests)
     set_tests_properties(autorun_exit_status PROPERTIES TIMEOUT 20)
+
+    add_test_executable(console_progress_tests ${CMAKE_CURRENT_SOURCE_DIR}/cli/tests/ConsoleProgressTests.cpp)
+    target_include_directories(console_progress_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/cli/include ${CMAKE_CURRENT_SOURCE_DIR}/domain/include)
+    add_test(NAME console_progress COMMAND console_progress_tests)
+    set_tests_properties(console_progress PROPERTIES TIMEOUT 20)
     add_test_executable(rewrite_boundaries_tests
         ${CMAKE_CURRENT_SOURCE_DIR}/codegen/tests/RewriteBoundaryTests.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/codegen/src/x86/X64InstructionRewriter.cpp
