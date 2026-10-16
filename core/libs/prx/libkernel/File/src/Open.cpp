@@ -316,6 +316,7 @@ int APS5_VABI sceKernelStat(const char* path, FileStat* sb) {
     }
     const auto status = std::filesystem::status(native, error);
     if (error == std::errc::not_a_directory) return SceErrorFromErrno(GuestEnotdir);
+    if (File::IsPathLookupError(error)) return SceErrorFromErrno(error.default_error_condition().value());
     if (!std::filesystem::exists(status)) {
         return SceErrorFromErrno(2);
     }

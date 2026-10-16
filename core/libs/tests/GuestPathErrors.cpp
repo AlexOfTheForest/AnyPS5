@@ -18,6 +18,9 @@ int APS5_VABI sceKernelUnlink(const char* path);
 int APS5_VABI sceKernelClose(int d);
 int APS5_VABI open_nid_postfix(const char* path, int flags, int mode);
 int APS5_VABI unlink_nid_postfix(const char* path);
+int APS5_VABI sceKernelStat(const char* path, FileStat* sb);
+int APS5_VABI stat_nid_postfix(const char* path, FileStat* sb);
+int APS5_VABI lstat_nid_postfix(const char* path, FileStat* sb);
 int* APS5_VABI __error_nid_postfix();
 }
 
@@ -71,11 +74,27 @@ void OpenAndUnlink() {
     Check(plain >= 0 && sceKernelClose(plain) == 0);
 }
 
+void Status() {
+    FileStat status{};
+    Check(sceKernelStat("loop", &status) == SceEloop);
+    Check(sceKernelStat("first", &status) == SceEloop);
+    Check(sceKernelStat("loop/inside", &status) == SceEloop);
+    Check(sceKernelStat(LongName.c_str(), &status) == SceEnametoolong);
+    Check(sceKernelStat((LongName + "/inside").c_str(), &status) == SceEnametoolong);
+    Check(PosixFails(stat_nid_postfix("loop", &status), GuestEloop));
+    Check(PosixFails(stat_nid_postfix(LongName.c_str(), &status), GuestEnametoolong));
+    Check(PosixFails(lstat_nid_postfix(LongName.c_str(), &status), GuestEnametoolong));
+    Check(lstat_nid_postfix("loop", &status) == 0 && (status.st_mode & 0170000) == 0120000);
+    Check(sceKernelStat("plain.txt", &status) == 0 && status.st_size == 5);
+    Check(sceKernelStat("missing.txt", &status) == SceKernelError(2));
+}
+
 }
 
 int main() {
     const auto root = EnterFreshRoot();
     OpenAndUnlink();
+    Status();
     std::error_code error;
     std::filesystem::current_path(std::filesystem::temp_directory_path(), error);
     std::filesystem::remove_all(root, error);

@@ -37,4 +37,8 @@ int SceErrorFromHostErrno(int error) {
     return static_cast<int>(0x80020000u | static_cast<unsigned>(guest));
 }
 
+bool IsPathLookupError(const std::error_code& error) {
+    return error == std::errc::filename_too_long || error == std::errc::too_many_symbolic_link_levels;
+}
+
 }
