@@ -21,6 +21,10 @@ int APS5_VABI unlink_nid_postfix(const char* path);
 int APS5_VABI sceKernelStat(const char* path, FileStat* sb);
 int APS5_VABI stat_nid_postfix(const char* path, FileStat* sb);
 int APS5_VABI lstat_nid_postfix(const char* path, FileStat* sb);
+int APS5_VABI sceKernelMkdir(const char* path, std::uint16_t mode);
+int APS5_VABI sceKernelRmdir(const char* path);
+int APS5_VABI mkdir_nid_postfix(const char* path, std::uint16_t mode);
+int APS5_VABI rmdir_nid_postfix(const char* path);
 int* APS5_VABI __error_nid_postfix();
 }
 
@@ -89,12 +93,26 @@ void Status() {
     Check(sceKernelStat("missing.txt", &status) == SceKernelError(2));
 }
 
+void Directories() {
+    Check(sceKernelMkdir("loop/inside", 0755) == SceEloop);
+    Check(sceKernelMkdir(LongName.c_str(), 0755) == SceEnametoolong);
+    Check(PosixFails(mkdir_nid_postfix("loop/inside", 0755), GuestEloop));
+    Check(sceKernelRmdir("loop/inside") == SceEloop);
+    Check(sceKernelRmdir(LongName.c_str()) == SceEnametoolong);
+    Check(sceKernelRmdir((LongName + "/inside").c_str()) == SceEnametoolong);
+    Check(PosixFails(rmdir_nid_postfix(LongName.c_str()), GuestEnametoolong));
+    Check(sceKernelRmdir("loop") == SceKernelError(20));
+    Check(sceKernelMkdir("made", 0755) == 0 && sceKernelRmdir("made") == 0);
+    Check(sceKernelRmdir("made") == SceKernelError(2));
+}
+
 }
 
 int main() {
     const auto root = EnterFreshRoot();
     OpenAndUnlink();
     Status();
+    Directories();
     std::error_code error;
     std::filesystem::current_path(std::filesystem::temp_directory_path(), error);
     std::filesystem::remove_all(root, error);
