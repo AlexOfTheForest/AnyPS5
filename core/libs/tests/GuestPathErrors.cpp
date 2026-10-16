@@ -27,6 +27,8 @@ int APS5_VABI mkdir_nid_postfix(const char* path, std::uint16_t mode);
 int APS5_VABI rmdir_nid_postfix(const char* path);
 int APS5_VABI sceKernelRename(const char* from, const char* to);
 int APS5_VABI rename_nid_postfix(const char* from, const char* to);
+int APS5_VABI sceKernelTruncate_nid_postfix(const char* path, std::int64_t length);
+int APS5_VABI truncate_nid_postfix(const char* path, std::int64_t length);
 int* APS5_VABI __error_nid_postfix();
 }
 
@@ -118,6 +120,15 @@ void Rename() {
     Check(sceKernelRename("plain.txt", "moved.txt") == 0 && sceKernelRename("moved.txt", "plain.txt") == 0);
 }
 
+void Truncate() {
+    Check(sceKernelTruncate_nid_postfix("loop", 0) == SceEloop);
+    Check(sceKernelTruncate_nid_postfix(LongName.c_str(), 0) == SceEnametoolong);
+    Check(PosixFails(truncate_nid_postfix("loop", 0), GuestEloop));
+    Check(PosixFails(truncate_nid_postfix(LongName.c_str(), 0), GuestEnametoolong));
+    Check(sceKernelTruncate_nid_postfix("missing.txt", 0) == SceKernelError(2));
+    Check(sceKernelTruncate_nid_postfix("plain.txt", 2) == 0 && std::filesystem::file_size("plain.txt") == 2);
+}
+
 }
 
 int main() {
@@ -126,6 +137,7 @@ int main() {
     Status();
     Directories();
     Rename();
+    Truncate();
     std::error_code error;
     std::filesystem::current_path(std::filesystem::temp_directory_path(), error);
     std::filesystem::remove_all(root, error);
