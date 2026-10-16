@@ -25,6 +25,8 @@ int APS5_VABI sceKernelMkdir(const char* path, std::uint16_t mode);
 int APS5_VABI sceKernelRmdir(const char* path);
 int APS5_VABI mkdir_nid_postfix(const char* path, std::uint16_t mode);
 int APS5_VABI rmdir_nid_postfix(const char* path);
+int APS5_VABI sceKernelRename(const char* from, const char* to);
+int APS5_VABI rename_nid_postfix(const char* from, const char* to);
 int* APS5_VABI __error_nid_postfix();
 }
 
@@ -106,6 +108,16 @@ void Directories() {
     Check(sceKernelRmdir("made") == SceKernelError(2));
 }
 
+void Rename() {
+    Check(sceKernelRename(LongName.c_str(), "target.txt") == SceEnametoolong);
+    Check(sceKernelRename("loop/inside", "target.txt") == SceEloop);
+    Check(sceKernelRename("plain.txt", LongName.c_str()) == SceEnametoolong);
+    Check(sceKernelRename("plain.txt", "loop/inside") == SceEloop);
+    Check(PosixFails(rename_nid_postfix(LongName.c_str(), "target.txt"), GuestEnametoolong));
+    Check(sceKernelRename("missing.txt", "target.txt") == SceKernelError(2));
+    Check(sceKernelRename("plain.txt", "moved.txt") == 0 && sceKernelRename("moved.txt", "plain.txt") == 0);
+}
+
 }
 
 int main() {
@@ -113,6 +125,7 @@ int main() {
     OpenAndUnlink();
     Status();
     Directories();
+    Rename();
     std::error_code error;
     std::filesystem::current_path(std::filesystem::temp_directory_path(), error);
     std::filesystem::remove_all(root, error);

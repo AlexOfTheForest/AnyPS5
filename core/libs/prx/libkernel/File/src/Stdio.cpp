@@ -1245,6 +1245,7 @@ int APS5_VABI sceKernelRename(const char* from, const char* to) {
     if (const int error = ResolvePathError_nid_no_patch(from, source)) return SceKernelError(error);
     std::error_code error;
     const auto sourceStatus = std::filesystem::status(source, error);
+    if (const int failure = PathLookupFailure(error)) return failure;
     if (!std::filesystem::exists(sourceStatus)) return SceErrorFromErrno(GUEST_ENOENT);
     std::filesystem::path destination;
     if (const int result = ResolvePathError_nid_no_patch(to, destination)) return SceKernelError(result);
@@ -1254,6 +1255,7 @@ int APS5_VABI sceKernelRename(const char* from, const char* to) {
     replacesFile = !std::filesystem::is_directory(sourceStatus) && std::filesystem::exists(destinationStatus) && !std::filesystem::is_directory(destinationStatus);
 #endif
     error = RenameNative_nid_no_patch(source, destination, replacesFile);
+    if (const int failure = PathLookupFailure(error)) return failure;
     if (error) return SceErrorFromErrno(GUEST_EIO);
     RecordWrittenPath_nid_no_patch(source);
     RecordWrittenPath_nid_no_patch(destination);
